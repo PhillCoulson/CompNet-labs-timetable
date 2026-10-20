@@ -386,7 +386,26 @@ const TODAY=chinaToday();
 function categoryFor(group){return CATEGORIES.find(category=>category.id===group.category)}
 function groupName(group){return `${categoryFor(group).shortName}第${group.number}组`}
 const EVENTS=GROUPS.flatMap(group=>group.lessons.map(([week,day,slot,room],index)=>({id:`${group.id}-${index+1}`,groupId:group.id,category:group.category,number:group.number,name:groupName(group),teachers:group.teachers,room,week,day,slot,sequence:index+1,date:addDays(SEMESTER_START,(week-1)*7+day-1)}))).sort((first,second)=>first.date-second.date||first.slot-second.slot||first.groupId.localeCompare(second.groupId,'en',{numeric:true}));
-let state={view:'week',cursor:TODAY,selected:new Set(GROUPS.map(group=>group.id)),myGroups:{config:null,programming:null},lookup:false};
+const GROUP_STORAGE_KEY='compnet-labs-timetable:2026-fall:groups';
+let selectionRemembered=false;
+function readSavedGroups(){
+ try{
+  const saved=JSON.parse(localStorage.getItem(GROUP_STORAGE_KEY));
+  if(!saved||typeof saved!=='object'||Array.isArray(saved))return null;
+  const groups={config:null,programming:null};
+  for(const category of CATEGORIES){
+   if(GROUPS.some(group=>group.category===category.id&&group.id===saved[category.id]))groups[category.id]=saved[category.id];
+  }
+  if(Object.values(groups).some(Boolean)){selectionRemembered=true;return groups}
+ }catch{}
+ return null;
+}
+function rememberGroups(groups){
+ selectionRemembered=false;
+ try{localStorage.setItem(GROUP_STORAGE_KEY,JSON.stringify(groups));selectionRemembered=true}catch{}
+}
+const savedGroups=readSavedGroups();
+let state={view:'week',cursor:TODAY,selected:new Set(GROUPS.map(group=>group.id)),myGroups:savedGroups||{config:null,programming:null},lookup:false};
 function personalIds(){return Object.values(state.myGroups).filter(Boolean)}
 function isPersonal(id){return personalIds().includes(id)}
 function onlyMine(){const ids=personalIds();return ids.length>0&&state.selected.size===ids.length&&ids.every(id=>state.selected.has(id))}
@@ -459,7 +478,7 @@ function renderPersonal(){
  const names=mine.map(groupName).join(' / ');
  $('lookup-banner').hidden=!state.lookup;
  $('change-class').textContent=mine.length?'更换 / 补选我的小组':'选择我的小组';
- $('my-class-note').textContent=CATEGORIES.map(category=>{const group=GROUPS.find(item=>item.id===state.myGroups[category.id]);return group?`${groupName(group)} · ${group.teachers}`:`${category.shortName}：尚未选择`}).join('；');
+ $('my-class-note').textContent=CATEGORIES.map(category=>{const group=GROUPS.find(item=>item.id===state.myGroups[category.id]);return group?`${groupName(group)} · ${group.teachers}`:`${category.shortName}：尚未选择`}).join('；')+(mine.length?` · ${selectionRemembered?'已在此浏览器记住':'仅本次有效（浏览器未允许保存）'}`:'');
  $('focus-panel').setAttribute('aria-label',mine.length?`${names}重点关注`:'我的小组重点关注');
  $('focus-class-name').textContent=mine.length?`★ ${names}`:'尚未选择小组';
  $('personal-footer').innerHTML=`${mine.length?`<span class="footer-star">★</span> 蓝色星标为${names}`:'选择小组后显示蓝色星标'} · 配置 16 组 / 编程 8 组 · 共 72 次课 · 第 8–14 周`;
@@ -469,7 +488,7 @@ function renderPersonal(){
 }
 function applyMyGroups(nextGroups){
  const wasOnlyMine=onlyMine();
- state.myGroups={...nextGroups};state.lookup=false;
+ state.myGroups={...nextGroups};state.lookup=false;rememberGroups(state.myGroups);
  if(wasOnlyMine)state.selected=new Set(personalIds());else personalIds().forEach(id=>state.selected.add(id));
  if($('class-picker').open)$('class-picker').close();
  if($('course-dialog').open)$('course-dialog').close();
@@ -510,7 +529,7 @@ $('today-month').textContent=`今天 · ${TODAY.getUTCFullYear()} 年 ${TODAY.ge
 $('today-number').innerHTML=`${String(TODAY.getUTCDate()).padStart(2,'0')}<span>${DAYS[weekday(TODAY)]}</span>`;
 $('today-line').textContent=weekOf(TODAY)>0?`第 ${weekOf(TODAY)} 个教学周`:'学期开始前';
 for(let week=1;week<=14;week++){const option=document.createElement('option');option.value=week;const date=addDays(SEMESTER_START,(week-1)*7);option.textContent=`第 ${week} 周 · ${date.getUTCMonth()+1}/${date.getUTCDate()}`;$('week-jump').append(option)}
-render();openClassPicker();
+render();if(!personalIds().length)openClassPicker();
 </script>
 </body>
 </html>
