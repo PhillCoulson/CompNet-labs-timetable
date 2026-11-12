@@ -276,7 +276,8 @@ button:focus-visible,select:focus-visible,a:focus-visible{outline-color:var(--ac
 
 .main{display:flex;flex-direction:column;align-self:stretch}
 .main> *{flex-shrink:0}
-.sidebar{align-self:stretch}
+.sidebar{align-self:start}
+@media(min-width:761px){.sidebar.is-sticky{position:sticky;top:16px}}
 .page-footer{margin-top:auto;padding-top:18px}
 .footer-links{align-self:flex-start;display:flex;flex-direction:column;margin-top:0}
 .footer-link{align-self:flex-start;display:inline-flex;align-items:center;gap:8px;min-height:30px;padding:8px 0 0;color:var(--muted);font-size:12px;line-height:22px;font-weight:400;text-decoration:none;white-space:nowrap}
@@ -331,6 +332,11 @@ button:focus-visible,select:focus-visible,a:focus-visible{outline-color:var(--ac
 }
 @media(max-width:360px){.group-filter-grid .filter{gap:3px}.group-filter-grid .swatch{width:17px;min-width:17px}.group-filter-grid .filter-name{font-size:10px}}
 </style>
+<style>
+a.footer-link[href="https://phillcoulson.github.io/OS-labs-timetable/"]:hover{color:#c5658b}
+a.footer-link[href="https://phillcoulson.github.io/CompNet-labs-timetable/"]:hover{color:#6a9bcc}
+a.footer-link[href="https://phillcoulson.github.io/SC-labs-timetable/"]:hover{color:#649987}
+</style>
 </head>
 <body>
 <noscript><div class="no-js">此日历需要启用浏览器 JavaScript 才能显示课表。所有数据均已内置，无需联网。</div></noscript>
@@ -355,6 +361,7 @@ button:focus-visible,select:focus-visible,a:focus-visible{outline-color:var(--ac
 <div class="footer-links">
 <a class="github-repository-link footer-link" href="https://github.com/PhillCoulson/CompNet-labs-timetable" target="_blank" rel="noopener noreferrer" aria-label="在 GitHub 上查看仓库并 Star（在新标签页打开）" title="打开 GitHub 仓库，为课表点 Star"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 19 4.77 5.07 5.07 0 0 0 18.91 1S17.73.65 15 2.48a13.38 13.38 0 0 0-7 0C5.27.65 4.09 1 4.09 1A5.07 5.07 0 0 0 4 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 8 18.13V22"/></svg><span lang="en">Star on GitHub</span></a>
 <a class="related-timetable-link footer-link" href="https://phillcoulson.github.io/OS-labs-timetable/" target="_blank" rel="noopener noreferrer" aria-label="在这里查看操作系统实验课表（在新标签页打开）"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3h7v7m0-7L11 13"/><path d="M10 5H6a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-4"/></svg><span>在这里查看<strong>操作系统</strong>实验课表</span></a>
+<a class="related-timetable-link footer-link" href="https://phillcoulson.github.io/SC-labs-timetable/" target="_blank" rel="noopener noreferrer" aria-label="在这里查看软件构造实践课表（在新标签页打开）"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3h7v7m0-7L11 13"/><path d="M10 5H6a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-4"/></svg><span>在这里查看<strong>软件构造实践</strong>课表</span></a>
 </div></main>
 </div>
 <dialog class="dialog" id="course-dialog" aria-labelledby="dialog-title"><div class="dialog-top"><h2 id="dialog-title">课程详情</h2><button id="close-dialog" class="icon-button" aria-label="关闭详情"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div><div id="dialog-content"></div></dialog>
@@ -531,6 +538,16 @@ $('today-number').innerHTML=`${String(TODAY.getUTCDate()).padStart(2,'0')}<span>
 $('today-line').textContent=weekOf(TODAY)>0?`第 ${weekOf(TODAY)} 个教学周`:'学期开始前';
 for(let week=1;week<=14;week++){const option=document.createElement('option');option.value=week;const date=addDays(SEMESTER_START,(week-1)*7);option.textContent=`第 ${week} 周 · ${date.getUTCMonth()+1}/${date.getUTCDate()}`;$('week-jump').append(option)}
 render();if(!personalIds().length)openClassPicker();
+</script>
+<script>
+const sidebar = document.querySelector(".sidebar");
+function updateSidebarPosition() {
+  const fitsViewport = window.matchMedia("(min-width:761px)").matches && sidebar.getBoundingClientRect().height <= window.innerHeight - 32;
+  sidebar.classList.toggle("is-sticky", fitsViewport);
+}
+new ResizeObserver(updateSidebarPosition).observe(sidebar);
+window.addEventListener("resize", updateSidebarPosition);
+updateSidebarPosition();
 </script>
 </body>
 </html>
